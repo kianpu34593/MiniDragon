@@ -1,0 +1,3 @@
+updated_L: 7.735294117647059
+number_of_atoms: 500
+Position_file_name: LJ_argon8^3
