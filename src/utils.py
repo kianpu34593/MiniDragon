@@ -117,7 +117,7 @@ def LJ_potent_nondimen(position,r_cut,L):
     #fix value for a certain r_limit
     dU_drcut=24*r_cut**(-7)-48*r_cut**(-13)
     U_rcut=4*(r_cut**(-12)-r_cut**(-6))
-    for ind, atom in enumerate(range(num-1)):
+    for atom in range(num-1):
         position_relevent=position[atom:,:]
         position_other=position_relevent[1:,:]
         #pbc rule2
@@ -126,7 +126,7 @@ def LJ_potent_nondimen(position,r_cut,L):
         r_relat=np.sqrt(np.sum(separation_new**2,axis=1)).reshape(separation_new.shape[0],)
         LJ=[]
         #get out the particles inside the r_limit
-        for i, r0 in enumerate(r_relat):
+        for r0 in r_relat:
             if r0 <= r_cut:
                LJ_num=4*r0**(-12)-4*r0**(-6)-U_rcut-(r0-r_cut)*dU_drcut
                LJ.append(LJ_num)
@@ -158,7 +158,7 @@ def insta_pressure(L,T,position,r_cut,e_scale):
         force=[]
         active_r_relat=[]
         #get out the particles inside the r_limit
-        for i, r0 in enumerate(r_relat):
+        for r0 in r_relat:
             if r0 <= r_cut:
                #active_r_relat.append(r0)
                force_num=-(24*r0**(-7)-48*r0**(-13))+dU_drcut
@@ -181,6 +181,7 @@ def cell_to_dict(info,nx,ny,nz,L):
     xinterval=L/nx
     yinterval=L/ny
     zinterval=L/nz
+    #cell_lists={}
     for i in range(1,nx*ny*nz+1): 
       cell_lists[i]= np.zeros((1,9))
     for i in range(info.shape[0]):
@@ -189,10 +190,6 @@ def cell_to_dict(info,nx,ny,nz,L):
       #if statements !!!!!!!
       #check later
       atomID=int(((np.floor(atom[:,0]/xinterval)+1+(np.floor(atom[:,1]/yinterval))*ny)+(np.floor(atom[:,2]/zinterval))*(nx*ny))[0])
-      if atomID>9:
-        print('atomID>9')
-      if atomID<0:
-        print('atomID<0')
       cell_lists[atomID]=np.append(cell_lists[atomID],atom,axis=0)
     for i in range(1,nx*ny*nz+1):
        cell_lists[i]=cell_lists[i][1:,:]
@@ -268,7 +265,7 @@ def LJ_accel(position,neighb_x_0,r_cut,L):
         update_accel[atom,:]=np.sum(accel,axis=0)
     return update_accel.reshape(subcube_atoms,3)
 
-def data_saver(info, PE, KE, T_insta, P_insta, L, num_atoms,part_type,name,iterations_int=1000, make_directory=True):
+def data_saver(info, PE, KE, T_insta, P_insta, L, num_atoms,part_type,name,period,stop_step, r_c, iterations_int=1000, make_directory=True):
     iterations=str(iterations_int)
     if make_directory == True:
         os.mkdir('results')
@@ -295,9 +292,14 @@ def data_saver(info, PE, KE, T_insta, P_insta, L, num_atoms,part_type,name,itera
         other_dict['P_insta']=P_insta.reshape(P_insta.shape[0],)
         other_df=pd.DataFrame.from_dict(other_dict)
         other_df.to_csv(path_to_file_other,index_label='step')
+
+        #writing summary file
         s.write("Simulation Cell Size(unitless): "+str(L)+"\n")
         s.write("Simulation Particles Amount: "+str(num_atoms)+"\n")
-        s.write("File Name: "+str(name))
+        s.write("File Name: "+str(name)+"\n")
+        s.write("Simulation Time: "+ str(period)+"\n")
+        s.write("Simulation Step: "+str(stop_step)+"\n")
+        s.write("Force Cut-off: "+str(r_c)+"\n")
         p.close()
         s.close()
     else:
@@ -328,6 +330,9 @@ def data_saver(info, PE, KE, T_insta, P_insta, L, num_atoms,part_type,name,itera
         #writing summary file
         s.write("Simulation Cell Size(unitless): "+str(L)+"\n")
         s.write("Simulation Particles Amount: "+str(num_atoms)+"\n")
-        s.write("File Name: "+str(name))
+        s.write("File Name: "+str(name)+"\n")
+        s.write("Simulation Time: "+ str(period)+"\n")
+        s.write("Simulation Step: "+str(stop_step)+"\n")
+        s.write("Force Cut-off: "+str(r_c)+"\n")
         p.close()
         s.close()
